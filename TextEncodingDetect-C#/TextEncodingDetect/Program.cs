@@ -1,5 +1,4 @@
-﻿//
-// Copyright 2015 Jonathan Bennett <jon@autoitscript.com>
+﻿// Copyright 2015-2016 Jonathan Bennett <jon@autoitscript.com>
 // 
 // https://www.autoitscript.com 
 //
@@ -14,15 +13,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AutoIt.Text;
+using AutoIt.Common;
 
 public class Program
 {
@@ -58,23 +52,23 @@ public class Program
         {
             Console.WriteLine("Binary");
         }
-        else if (encoding == TextEncodingDetect.Encoding.ASCII)
+        else if (encoding == TextEncodingDetect.Encoding.Ascii)
         {
             Console.WriteLine("ASCII (chars in the 0-127 range)");
         }
-        else if (encoding == TextEncodingDetect.Encoding.ANSI)
+        else if (encoding == TextEncodingDetect.Encoding.Ansi)
         {
             Console.WriteLine("ANSI (chars in the range 0-255 range)");
         }
-        else if (encoding == TextEncodingDetect.Encoding.UTF8_BOM || encoding == TextEncodingDetect.Encoding.UTF8_NOBOM)
+        else if (encoding == TextEncodingDetect.Encoding.Utf8Bom || encoding == TextEncodingDetect.Encoding.Utf8Nobom)
         {
             Console.WriteLine("UTF-8");
         }
-        else if (encoding == TextEncodingDetect.Encoding.UTF16_LE_BOM || encoding == TextEncodingDetect.Encoding.UTF16_LE_NOBOM)
+        else if (encoding == TextEncodingDetect.Encoding.Utf16LeBom || encoding == TextEncodingDetect.Encoding.Utf16LeNoBom)
         {
             Console.WriteLine("UTF-16 Little Endian");
         }
-        else if (encoding == TextEncodingDetect.Encoding.UTF16_BE_BOM || encoding == TextEncodingDetect.Encoding.UTF16_BE_NOBOM)
+        else if (encoding == TextEncodingDetect.Encoding.Utf16BeBom || encoding == TextEncodingDetect.Encoding.Utf16BeNoBom)
         {
             Console.WriteLine("UTF-16 Big Endian");
         }

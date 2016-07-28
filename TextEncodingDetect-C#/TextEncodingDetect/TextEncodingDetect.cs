@@ -1,5 +1,4 @@
-﻿//
-// Copyright 2015 Jonathan Bennett <jon@autoitscript.com>
+﻿// Copyright 2015-2016 Jonathan Bennett <jon@autoitscript.com>
 // 
 // https://www.autoitscript.com 
 //
@@ -14,54 +13,55 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
 
-namespace AutoIt.Text
+namespace AutoIt.Common
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-
     public class TextEncodingDetect
     {
-        #region Fields
+        private readonly byte[] _utf16BeBom =
+        {
+            0xFE,
+            0xFF
+        };
 
-        private readonly byte[] utf16LEBOM = { 0xFF, 0xFE };
-        private readonly byte[] utf16BEBOM = { 0xFE, 0xFF };
-        private readonly byte[] utf8BOM = { 0xEF, 0xBB, 0xBF };
+        private readonly byte[] _utf16LeBom =
+        {
+            0xFF,
+            0xFE
+        };
 
-        private bool nullSuggestsBinary = true;
-        private double utf16ExpectedNullPercent = 70;
-        private double utf16UnexpectedNullPercent = 10;
+        private readonly byte[] _utf8Bom =
+        {
+            0xEF,
+            0xBB,
+            0xBF
+        };
 
-        #endregion
-
-        #region Enums
+        private bool _nullSuggestsBinary = true;
+        private double _utf16ExpectedNullPercent = 70;
+        private double _utf16UnexpectedNullPercent = 10;
 
         public enum Encoding
         {
-            None,               // Unknown or binary
-            ANSI,               // 0-255
-            ASCII,              // 0-127
-            UTF8_BOM,           // UTF8 with BOM
-            UTF8_NOBOM,         // UTF8 without BOM
-            UTF16_LE_BOM,       // UTF16 LE with BOM
-            UTF16_LE_NOBOM,     // UTF16 LE without BOM
-            UTF16_BE_BOM,       // UTF16-BE with BOM
-            UTF16_BE_NOBOM      // UTF16-BE without BOM
+            None, // Unknown or binary
+            Ansi, // 0-255
+            Ascii, // 0-127
+            Utf8Bom, // UTF8 with BOM
+            Utf8Nobom, // UTF8 without BOM
+            Utf16LeBom, // UTF16 LE with BOM
+            Utf16LeNoBom, // UTF16 LE without BOM
+            Utf16BeBom, // UTF16-BE with BOM
+            Utf16BeNoBom // UTF16-BE without BOM
         }
 
-        #endregion
-
-        #region Properties
-
+        /// <summary>
+        ///     Sets if the presence of nulls in a buffer indicate the buffer is binary data rather than text.
+        /// </summary>
         public bool NullSuggestsBinary
         {
             set
             {
-                this.nullSuggestsBinary = value;
+                _nullSuggestsBinary = value;
             }
         }
 
@@ -71,7 +71,7 @@ namespace AutoIt.Text
             {
                 if (value > 0 && value < 100)
                 {
-                    this.utf16ExpectedNullPercent = value;
+                    _utf16ExpectedNullPercent = value;
                 }
             }
         }
@@ -82,106 +82,254 @@ namespace AutoIt.Text
             {
                 if (value > 0 && value < 100)
                 {
-                    this.utf16UnexpectedNullPercent = value;
+                    _utf16UnexpectedNullPercent = value;
                 }
             }
         }
 
-        #endregion
-
-        public static int GetBOMLengthFromEncodingMode(Encoding encoding)
+        /// <summary>
+        ///     Gets the BOM length for a given Encoding mode.
+        /// </summary>
+        /// <param name="encoding"></param>
+        /// <returns>The BOM length.</returns>
+        public static int GetBomLengthFromEncodingMode(Encoding encoding)
         {
-            int length = 0;
+            int length;
 
-            if (encoding == Encoding.UTF16_BE_BOM || encoding == Encoding.UTF16_LE_BOM)
+            switch (encoding)
             {
-                length = 2;
-            }
-            else if (encoding == Encoding.UTF8_BOM)
-            {
-                length = 3;
+                case Encoding.Utf16BeBom:
+                case Encoding.Utf16LeBom:
+                    length = 2;
+                    break;
+
+                case Encoding.Utf8Bom:
+                    length = 3;
+                    break;
+
+                default:
+                    length = 0;
+                    break;
             }
 
             return length;
         }
 
-        public Encoding CheckBOM(byte[] buffer, int size)
+        /// <summary>
+        ///     Checks for a BOM sequence in a byte buffer.
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <param name="size"></param>
+        /// <returns>Encoding type or Encoding.None if no BOM.</returns>
+        public Encoding CheckBom(byte[] buffer, int size)
         {
             // Check for BOM
-            if (size >= 2 && buffer[0] == this.utf16LEBOM[0] && buffer[1] == this.utf16LEBOM[1])
+            if (size >= 2 && buffer[0] == _utf16LeBom[0] && buffer[1] == _utf16LeBom[1])
             {
-                return Encoding.UTF16_LE_BOM;
+                return Encoding.Utf16LeBom;
             }
-            else if (size >= 2 && buffer[0] == this.utf16BEBOM[0] && buffer[1] == this.utf16BEBOM[1])
+
+            if (size >= 2 && buffer[0] == _utf16BeBom[0] && buffer[1] == _utf16BeBom[1])
             {
-                return Encoding.UTF16_BE_BOM;
+                return Encoding.Utf16BeBom;
             }
-            else if (size >= 3 && buffer[0] == this.utf8BOM[0] && buffer[1] == this.utf8BOM[1] && buffer[2] == this.utf8BOM[2])
+
+            if (size >= 3 && buffer[0] == _utf8Bom[0] && buffer[1] == _utf8Bom[1] && buffer[2] == _utf8Bom[2])
             {
-                return Encoding.UTF8_BOM;
+                return Encoding.Utf8Bom;
             }
-            else
-            {
-                return Encoding.None;
-            }
+
+            return Encoding.None;
         }
 
+        /// <summary>
+        ///     Automatically detects the Encoding type of a given byte buffer.
+        /// </summary>
+        /// <param name="buffer">The byte buffer.</param>
+        /// <param name="size">The size of the byte buffer.</param>
+        /// <returns>The Encoding type or Encoding.None if unknown.</returns>
         public Encoding DetectEncoding(byte[] buffer, int size)
         {
             // First check if we have a BOM and return that if so
-            Encoding encoding = this.CheckBOM(buffer, size);
+            Encoding encoding = CheckBom(buffer, size);
             if (encoding != Encoding.None)
             {
                 return encoding;
             }
 
             // Now check for valid UTF8
-            encoding = this.CheckUTF8(buffer, size);
+            encoding = CheckUtf8(buffer, size);
             if (encoding != Encoding.None)
             {
                 return encoding;
             }
 
             // Now try UTF16 
-            encoding = this.CheckUTF16NewlineChars(buffer, size);
+            encoding = CheckUtf16NewlineChars(buffer, size);
             if (encoding != Encoding.None)
             {
                 return encoding;
             }
 
-            encoding = this.CheckUTF16ASCII(buffer, size);
+            encoding = CheckUtf16Ascii(buffer, size);
             if (encoding != Encoding.None)
             {
                 return encoding;
             }
 
             // ANSI or None (binary) then
-            if (!this.DoesContainNulls(buffer, size))
+            if (!DoesContainNulls(buffer, size))
             {
-                return Encoding.ANSI;
+                return Encoding.Ansi;
             }
-            else
+
+            // Found a null, return based on the preference in null_suggests_binary_
+            return _nullSuggestsBinary ? Encoding.None : Encoding.Ansi;
+        }
+
+        /// <summary>
+        ///     Checks if a buffer contains text that looks like utf16 by scanning for
+        ///     newline chars that would be present even in non-english text.
+        /// </summary>
+        /// <param name="buffer">The byte buffer.</param>
+        /// <param name="size">The size of the byte buffer.</param>
+        /// <returns>Encoding.none, Encoding.Utf16LeNoBom or Encoding.Utf16BeNoBom.</returns>
+        private static Encoding CheckUtf16NewlineChars(byte[] buffer, int size)
+        {
+            if (size < 2)
             {
-                // Found a null, return based on the preference in null_suggests_binary_
-                if (this.nullSuggestsBinary)
+                return Encoding.None;
+            }
+
+            // Reduce size by 1 so we don't need to worry about bounds checking for pairs of bytes
+            size--;
+
+            var leControlChars = 0;
+            var beControlChars = 0;
+
+            uint pos = 0;
+            while (pos < size)
+            {
+                byte ch1 = buffer[pos++];
+                byte ch2 = buffer[pos++];
+
+                if (ch1 == 0)
+                {
+                    if (ch2 == 0x0a || ch2 == 0x0d)
+                    {
+                        ++beControlChars;
+                    }
+                }
+                else if (ch2 == 0)
+                {
+                    if (ch1 == 0x0a || ch1 == 0x0d)
+                    {
+                        ++leControlChars;
+                    }
+                }
+
+                // If we are getting both LE and BE control chars then this file is not utf16
+                if (leControlChars > 0 && beControlChars > 0)
                 {
                     return Encoding.None;
                 }
-                else
-                {
-                    return Encoding.ANSI;
-                }
             }
+
+            if (leControlChars > 0)
+            {
+                return Encoding.Utf16LeNoBom;
+            }
+
+            return beControlChars > 0 ? Encoding.Utf16BeNoBom : Encoding.None;
         }
 
-        ///////////////////////////////////////////////////////////////////////////////
-        // Checks if a buffer contains valid utf8. Returns:
-        // None - not valid utf8
-        // UTF8_NOBOM - valid utf8 encodings and multibyte sequences
-        // ASCII - Only data in the 0-127 range. 
-        ///////////////////////////////////////////////////////////////////////////////
+        /// <summary>
+        /// Checks if a buffer contains any nulls. Used to check for binary vs text data.
+        /// </summary>
+        /// <param name="buffer">The byte buffer.</param>
+        /// <param name="size">The size of the byte buffer.</param>
+        private static bool DoesContainNulls(byte[] buffer, int size)
+        {
+            uint pos = 0;
+            while (pos < size)
+            {
+                if (buffer[pos++] == 0)
+                {
+                    return true;
+                }
+            }
 
-        private Encoding CheckUTF8(byte[] buffer, int size)
+            return false;
+        }
+
+        /// <summary>
+        ///     Checks if a buffer contains text that looks like utf16. This is done based
+        ///     on the use of nulls which in ASCII/script like text can be useful to identify.
+        /// </summary>
+        /// <param name="buffer">The byte buffer.</param>
+        /// <param name="size">The size of the byte buffer.</param>
+        /// <returns>Encoding.none, Encoding.Utf16LeNoBom or Encoding.Utf16BeNoBom.</returns>
+        private Encoding CheckUtf16Ascii(byte[] buffer, int size)
+        {
+            var numOddNulls = 0;
+            var numEvenNulls = 0;
+
+            // Get even nulls
+            uint pos = 0;
+            while (pos < size)
+            {
+                if (buffer[pos] == 0)
+                {
+                    numEvenNulls++;
+                }
+
+                pos += 2;
+            }
+
+            // Get odd nulls
+            pos = 1;
+            while (pos < size)
+            {
+                if (buffer[pos] == 0)
+                {
+                    numOddNulls++;
+                }
+
+                pos += 2;
+            }
+
+            double evenNullThreshold = numEvenNulls * 2.0 / size;
+            double oddNullThreshold = numOddNulls * 2.0 / size;
+            double expectedNullThreshold = _utf16ExpectedNullPercent / 100.0;
+            double unexpectedNullThreshold = _utf16UnexpectedNullPercent / 100.0;
+
+            // Lots of odd nulls, low number of even nulls
+            if (evenNullThreshold < unexpectedNullThreshold && oddNullThreshold > expectedNullThreshold)
+            {
+                return Encoding.Utf16LeNoBom;
+            }
+
+            // Lots of even nulls, low number of odd nulls
+            if (oddNullThreshold < unexpectedNullThreshold && evenNullThreshold > expectedNullThreshold)
+            {
+                return Encoding.Utf16BeNoBom;
+            }
+
+            // Don't know
+            return Encoding.None;
+        }
+
+        /// <summary>
+        ///     Checks if a buffer contains valid utf8.
+        /// </summary>
+        /// <param name="buffer">The byte buffer.</param>
+        /// <param name="size">The size of the byte buffer.</param>
+        /// <returns>
+        ///     Encoding type of Encoding.None (invalid UTF8), Encoding.Utf8NoBom (valid utf8 multibyte strings) or
+        ///     Encoding.ASCII (data in 0.127 range).
+        /// </returns>
+        /// <returns>2</returns>
+        private Encoding CheckUtf8(byte[] buffer, int size)
         {
             // UTF8 Valid sequences
             // 0xxxxxxx  ASCII
@@ -197,211 +345,63 @@ namespace AutoIt.Text
             // 240-244      4 bytes
             //
             // Subsequent chars are in the range 128-191
-            bool only_saw_ascii_range = true;
+            var onlySawAsciiRange = true;
             uint pos = 0;
-            int more_chars;
 
             while (pos < size)
             {
                 byte ch = buffer[pos++];
 
-                if (ch == 0 && this.nullSuggestsBinary)
+                if (ch == 0 && _nullSuggestsBinary)
                 {
                     return Encoding.None;
                 }
-                else if (ch <= 127)
+
+                int moreChars;
+                if (ch <= 127)
                 {
                     // 1 byte
-                    more_chars = 0;
+                    moreChars = 0;
                 }
                 else if (ch >= 194 && ch <= 223)
                 {
                     // 2 Byte
-                    more_chars = 1;
+                    moreChars = 1;
                 }
                 else if (ch >= 224 && ch <= 239)
                 {
                     // 3 Byte
-                    more_chars = 2;
+                    moreChars = 2;
                 }
                 else if (ch >= 240 && ch <= 244)
                 {
                     // 4 Byte
-                    more_chars = 3;
+                    moreChars = 3;
                 }
                 else
                 {
-                    return Encoding.None;               // Not utf8
+                    return Encoding.None; // Not utf8
                 }
 
                 // Check secondary chars are in range if we are expecting any
-                while (more_chars > 0 && pos < size)
+                while (moreChars > 0 && pos < size)
                 {
-                    only_saw_ascii_range = false;       // Seen non-ascii chars now
+                    onlySawAsciiRange = false; // Seen non-ascii chars now
 
                     ch = buffer[pos++];
                     if (ch < 128 || ch > 191)
                     {
-                        return Encoding.None;           // Not utf8
+                        return Encoding.None; // Not utf8
                     }
 
-                    --more_chars;
+                    --moreChars;
                 }
             }
 
             // If we get to here then only valid UTF-8 sequences have been processed
 
             // If we only saw chars in the range 0-127 then we can't assume UTF8 (the caller will need to decide)
-            if (only_saw_ascii_range)
-            {
-                return Encoding.ASCII;
-            }
-            else
-            {
-                return Encoding.UTF8_NOBOM;
-            }
-        }
-
-        ///////////////////////////////////////////////////////////////////////////////
-        // Checks if a buffer contains text that looks like utf16 by scanning for 
-        // newline chars that would be present even in non-english text.
-        // Returns:
-        // None - not valid utf16
-        // UTF16_LE_NOBOM - looks like utf16 le
-        // UTF16_BE_NOBOM - looks like utf16 be
-        ///////////////////////////////////////////////////////////////////////////////
-
-        private Encoding CheckUTF16NewlineChars(byte[] buffer, int size)
-        {
-            if (size < 2)
-            {
-                return Encoding.None;
-            }
-
-            // Reduce size by 1 so we don't need to worry about bounds checking for pairs of bytes
-            size--;
-
-            int le_control_chars = 0;
-            int be_control_chars = 0;
-            byte ch1, ch2;
-
-            uint pos = 0;
-            while (pos < size)
-            {
-                ch1 = buffer[pos++];
-                ch2 = buffer[pos++];
-
-                if (ch1 == 0)
-                {
-                    if (ch2 == 0x0a || ch2 == 0x0d)
-                    {
-                        ++be_control_chars;
-                    }
-                }
-                else if (ch2 == 0)
-                {
-                    if (ch1 == 0x0a || ch1 == 0x0d)
-                    {
-                        ++le_control_chars;
-                    }
-                }
-
-                // If we are getting both LE and BE control chars then this file is not utf16
-                if (le_control_chars > 0 && be_control_chars > 0)
-                {
-                    return Encoding.None;
-                }
-            }
-
-            if (le_control_chars > 0)
-            {
-                return Encoding.UTF16_LE_NOBOM;
-            }
-            else if (be_control_chars > 0)
-            {
-                return Encoding.UTF16_BE_NOBOM;
-            }
-            else
-            {
-                return Encoding.None;
-            }
-        }
-
-        ///////////////////////////////////////////////////////////////////////////////
-        // Checks if a buffer contains text that looks like utf16. This is done based
-        // the use of nulls which in ASCII/script like text can be useful to identify.
-        // Returns:
-        // None - not valid utf16
-        // UTF16_LE_NOBOM - looks like utf16 le
-        // UTF16_BE_NOBOM - looks like utf16 be
-        ///////////////////////////////////////////////////////////////////////////////
-
-        private Encoding CheckUTF16ASCII(byte[] buffer, int size)
-        {
-            int num_odd_nulls = 0;
-            int num_even_nulls = 0;
-
-            // Get even nulls
-            uint pos = 0;
-            while (pos < size)
-            {
-                if (buffer[pos] == 0)
-                {
-                    num_even_nulls++;
-                }
-
-                pos += 2;
-            }
-
-            // Get odd nulls
-            pos = 1;
-            while (pos < size)
-            {
-                if (buffer[pos] == 0)
-                {
-                    num_odd_nulls++;
-                }
-
-                pos += 2;
-            }
-
-            double even_null_threshold = (num_even_nulls * 2.0) / size;
-            double odd_null_threshold = (num_odd_nulls * 2.0) / size;
-            double expected_null_threshold = this.utf16ExpectedNullPercent / 100.0;
-            double unexpected_null_threshold = this.utf16UnexpectedNullPercent / 100.0;
-
-            // Lots of odd nulls, low number of even nulls
-            if (even_null_threshold < unexpected_null_threshold && odd_null_threshold > expected_null_threshold)
-            {
-                return Encoding.UTF16_LE_NOBOM;
-            }
-
-            // Lots of even nulls, low number of odd nulls
-            if (odd_null_threshold < unexpected_null_threshold && even_null_threshold > expected_null_threshold)
-            {
-                return Encoding.UTF16_BE_NOBOM;
-            }
-
-            // Don't know
-            return Encoding.None;
-        }
-
-        ///////////////////////////////////////////////////////////////////////////////
-        // Checks if a buffer contains any nulls. Used to check for binary vs text data.
-        ///////////////////////////////////////////////////////////////////////////////
-
-        private bool DoesContainNulls(byte[] buffer, int size)
-        {
-            uint pos = 0;
-            while (pos < size)
-            {
-                if (buffer[pos++] == 0)
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return onlySawAsciiRange ? Encoding.Ascii : Encoding.Utf8Nobom;
         }
     }
 }
