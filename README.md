@@ -34,9 +34,9 @@ These additional bytes are in the range **128-191**. This scheme means that if w
 UTF-16 text is generally made up of 2-byte sequences (technically, there can be a 4-byte sequence with surrogate pairs). Depending on the endianness of the file the unicode character 0x1234 could be represented in the character stream as "0x12 0x34" or "0x34 0x12".  The BOM is usually used to easily determine if the file is in big or little endian mode. Without a BOM this is a little more tricky to determine. I use two methods to try and determine if the text is UTF-16 and the endianness. The first is the newline characters 0x0a and 0x0d. Depending on the endianness they will be sequenced as "0x0a 0x00" or "0x00 0x0a". If every instance of these characters in a text file is encoded the same way then that is a good sign that the text is UTF-16 and if it is big or little endian. The drawback of this method is that it won't work for very small amounts of text, or files that don't contain newlines. The second method relies on the fact that many files may contain large amounts of pure ASCII text in the range 0-127. This applies especially to files generally used in IT like scripts and logs. When encoded in UTF-16 these are represented as the ASCII character and a null character. For example, space, 0x20 would be encoded as "0x00 0x20" or "0x20 0x00". Depending on the endianness this will result in a large amount of nulls in the odd or even byte positions. We just need to scan the file for these odd and even nulls and if there is a significant percentage in the expected position then we can assume the text is UTF-16.   
 
 ## The Library 
-There are separate libraries for C++ and C#. The notes here are for the C# version. The two main public functions are:
+There are separate libraries for C++ and C#. The notes/enums here are for the C# version. The two main public functions are:
 
-	public Encoding CheckBOM(byte[] buffer, int size)
+	public Encoding CheckBom(byte[] buffer, int size)
 	public Encoding DetectEncoding(byte[] buffer, int size)
 
 These functions return the Encoding which is the following enum:
@@ -44,14 +44,14 @@ These functions return the Encoding which is the following enum:
 	public enum Encoding
 	{
 		None,               // Unknown or binary
-		ANSI,               // 0-255
-		ASCII,              // 0-127
-		UTF8_BOM,           // UTF8 with BOM
-		UTF8_NOBOM,         // UTF8 without BOM
-		UTF16_LE_BOM,       // UTF16 LE with BOM
-		UTF16_LE_NOBOM,     // UTF16 LE without BOM
-		UTF16_BE_BOM,       // UTF16-BE with BOM
-		UTF16_BE_NOBOM      // UTF16-BE without BOM
+		Ansi,               // 0-255
+		Ascii,              // 0-127
+		Utf8Bom ,           // UTF8 with BOM
+		Utf8NoBom,          // UTF8 without BOM
+		Utf16LeBom,         // UTF16 LE with BOM
+		Utf16LeNoBom,       // UTF16 LE without BOM
+		Uft16BeBom,         // UTF16-BE with BOM
+		Utf16BeNoBom        // UTF16-BE without BOM
 	}
 
 The DetectEncoding function takes a byte buffer and a size parameter. The larger the buffer that is used, the more accurate the result will be. I'd recommend at least 4KB. Here is an example of passing a buffer to the DetectEncoding function:
@@ -65,23 +65,23 @@ The DetectEncoding function takes a byte buffer and a size parameter. The larger
 	{
 		Console.WriteLine("Binary");
 	}
-	else if (encoding == TextEncodingDetect.Encoding.ASCII)
+	else if (encoding == TextEncodingDetect.Encoding.Ascii)
 	{
 		Console.WriteLine("ASCII (chars in the 0-127 range)");
 	}
-	else if (encoding == TextEncodingDetect.Encoding.ANSI)
+	else if (encoding == TextEncodingDetect.Encoding.Ansi)
 	{
 		Console.WriteLine("ANSI (chars in the range 0-255 range)");
 	}
-	else if (encoding == TextEncodingDetect.Encoding.UTF8_BOM || encoding == TextEncodingDetect.Encoding.UTF8_NOBOM)
+	else if (encoding == TextEncodingDetect.Encoding.Utf8Bom || encoding == TextEncodingDetect.Encoding.Utf8NoBom)
 	{
 		Console.WriteLine("UTF-8");
 	}
-	else if (encoding == TextEncodingDetect.Encoding.UTF16_LE_BOM || encoding == TextEncodingDetect.Encoding.UTF16_LE_NOBOM)
+	else if (encoding == TextEncodingDetect.Encoding.Utf16LeBom || encoding == TextEncodingDetect.Encoding.Utf16LeNoBom)
 	{
 		Console.WriteLine("UTF-16 Little Endian");
 	}
-	else if (encoding == TextEncodingDetect.Encoding.UTF16_BE_BOM || encoding == TextEncodingDetect.Encoding.UTF16_BE_NOBOM)
+	else if (encoding == TextEncodingDetect.Encoding.Utf16BeBom || encoding == TextEncodingDetect.Encoding.Utf16BeNoBom)
 	{
 		Console.WriteLine("UTF-16 Big Endian");
 	}
