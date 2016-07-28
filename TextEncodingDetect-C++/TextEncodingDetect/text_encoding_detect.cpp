@@ -1,5 +1,5 @@
 //
-// Copyright 2015 Jonathan Bennett <jon@autoitscript.com>
+// Copyright 2015-2016 Jonathan Bennett <jon@autoitscript.com>
 // 
 // https://www.autoitscript.com 
 //
@@ -19,7 +19,7 @@
 // Includes
 #include "text_encoding_detect.h"
 
-using namespace AutoIt::Text;
+using namespace AutoIt::Common;
 
 static const unsigned char TextEncodingDetect_UTF16_BOM_LE[] = { unsigned char(0xFF), unsigned char(0xFE) };
 static const unsigned char TextEncodingDetect_UTF16_BOM_BE[] = { unsigned char(0xFE), unsigned char(0xFF) };
@@ -123,7 +123,7 @@ TextEncodingDetect::Encoding TextEncodingDetect::CheckBOM(const unsigned char *p
 // "None" if it just looks like binary data.
 ///////////////////////////////////////////////////////////////////////////////
 
-TextEncodingDetect::Encoding TextEncodingDetect::DetectEncoding(const unsigned char *pBuffer, size_t size)
+TextEncodingDetect::Encoding TextEncodingDetect::DetectEncoding(const unsigned char *pBuffer, size_t size) const
 {
 	// First check if we have a BOM and return that if so
 	Encoding encoding = CheckBOM(pBuffer, size);
@@ -165,7 +165,7 @@ TextEncodingDetect::Encoding TextEncodingDetect::DetectEncoding(const unsigned c
 // ASCII - Only data in the 0-127 range. 
 ///////////////////////////////////////////////////////////////////////////////
 
-TextEncodingDetect::Encoding TextEncodingDetect::CheckUTF8(const unsigned char *pBuffer, size_t size)
+TextEncodingDetect::Encoding TextEncodingDetect::CheckUTF8(const unsigned char *pBuffer, size_t size) const
 {
 	// UTF8 Valid sequences
 	// 0xxxxxxx  ASCII
@@ -303,7 +303,7 @@ TextEncodingDetect::Encoding TextEncodingDetect::CheckUTF16NewlineChars(const un
 // UTF16_BE_NOBOM - looks like utf16 be
 ///////////////////////////////////////////////////////////////////////////////
 
-TextEncodingDetect::Encoding TextEncodingDetect::CheckUTF16ASCII(const unsigned char *pBuffer, size_t size)
+TextEncodingDetect::Encoding TextEncodingDetect::CheckUTF16ASCII(const unsigned char *pBuffer, size_t size) const
 {
 	int num_odd_nulls = 0;
 	int num_even_nulls = 0;

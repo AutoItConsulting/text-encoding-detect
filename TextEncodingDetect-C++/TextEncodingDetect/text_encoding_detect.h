@@ -25,7 +25,7 @@
 
 namespace AutoIt
 { 
-namespace Text
+namespace Common
 {
 	class TextEncodingDetect
 	{
@@ -46,8 +46,8 @@ namespace Text
 		TextEncodingDetect();
 		~TextEncodingDetect();
 
-		Encoding CheckBOM(const unsigned char *pBuffer, size_t size);		// Just check if there is a BOM and return 
-		Encoding DetectEncoding(const unsigned char *pBuffer, size_t size);	// Check BOM and also guess if there is no BOM
+		static Encoding CheckBOM(const unsigned char *pBuffer, size_t size);		// Just check if there is a BOM and return 
+		Encoding DetectEncoding(const unsigned char *pBuffer, size_t size) const;	// Check BOM and also guess if there is no BOM
 		static int GetBOMLengthFromEncodingMode(Encoding encoding);			// Just return the BOM length of a given mode
 
 		void SetNullSuggestsBinary(bool null_suggests_binary) { null_suggests_binary_ = null_suggests_binary; }
@@ -66,13 +66,13 @@ namespace Text
 		int		utf16_expected_null_percent_;
 		int		utf16_unexpected_null_percent_;
 
-		Encoding CheckUTF8(const unsigned char *pBuffer, size_t size);				// Check for valid UTF8 with no BOM
-		Encoding CheckUTF16NewlineChars(const unsigned char *pBuffer, size_t size);	// Check for valid UTF16 with no BOM via control chars
-		Encoding CheckUTF16ASCII(const unsigned char *pBuffer, size_t size);		// Check for valid UTF16 with no BOM via null distribution
-		bool DoesContainNulls(const unsigned char *pBuffer, size_t size);			// Check for nulls
+		Encoding CheckUTF8(const unsigned char *pBuffer, size_t size) const;				// Check for valid UTF8 with no BOM
+		static Encoding CheckUTF16NewlineChars(const unsigned char *pBuffer, size_t size);	// Check for valid UTF16 with no BOM via control chars
+		Encoding CheckUTF16ASCII(const unsigned char *pBuffer, size_t size) const;		// Check for valid UTF16 with no BOM via null distribution
+		static bool DoesContainNulls(const unsigned char *pBuffer, size_t size);			// Check for nulls
 	};
 
-} // AutoIt.Text
+} // AutoIt.Common
 } // AutoIt
 
 //////////////////////////////////////////////////////////////////////

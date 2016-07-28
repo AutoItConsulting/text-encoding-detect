@@ -1,5 +1,5 @@
 //
-// Copyright 2015 Jonathan Bennett <jon@autoitscript.com>
+// Copyright 2015-2016 Jonathan Bennett <jon@autoitscript.com>
 // 
 // https://www.autoitscript.com 
 //
@@ -20,7 +20,7 @@
 #include <tchar.h>
 
 #include "text_encoding_detect.h"
-using namespace AutoIt::Text;
+using namespace AutoIt::Common;
 
 
 int wmain(int argc, wchar_t* argv[])
