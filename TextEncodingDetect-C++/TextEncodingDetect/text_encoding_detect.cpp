@@ -62,13 +62,13 @@ TextEncodingDetect::~TextEncodingDetect()
 void TextEncodingDetect::SetUtf16UnexpectedNullPercent(int percent) 
 {
 	if (percent > 0 && percent < 100)
-		utf16_expected_null_percent_ = percent; 
+		utf16_unexpected_null_percent_ = percent; 
 }
 
 void TextEncodingDetect::SetUtf16ExpectedNullPercent(int percent) 
 {
 	if (percent > 0 && percent < 100)
-		utf16_unexpected_null_percent_ = percent;
+		utf16_expected_null_percent_ = percent;
 }
 
 
